@@ -1,0 +1,35 @@
+name: Daily Companies Generator
+on:
+  schedule:
+    - cron: '0 6 * * *'   # daily at 06:00 UTC (adjust if needed)
+  workflow_dispatch:
+
+permissions:
+  contents: write   # needed to commit back to repo
+
+jobs:
+  generate_companies:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Install requirements
+        run: |
+          pip install -r backend/requirements.txt
+
+      - name: Run generator script
+        run: |
+          python backend/scraper.py
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add backend/companies.csv
+          git commit -m "chore: update companies.csv (auto-generated)" || echo "no changes"
+          git push origin HEAD
